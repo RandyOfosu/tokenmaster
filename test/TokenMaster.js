@@ -1,4 +1,5 @@
 const { expect } = require("chai")
+const { ethers } = require("hardhat")
 
 const NAME = "TokenMaster"
 const SYMBOL = "TM"
@@ -11,15 +12,14 @@ const OCCASION_TIME = "10:00AM CST"
 const OCCASION_LOCATION = "Austin, Texas"
 
 describe("TokenMaster", () => {
-  let tokenMaster
+  let TokenMaster
   let deployer, buyer
 
   beforeEach(async () => {
     // Setup accounts
     [deployer, buyer] = await ethers.getSigners()
 
-    // Deploy contract
-    const TokenMaster = await ethers.getContractFactory("TokenMaster")
+    const TokenMaster = await ethers.getContractFactory(NAME)
     tokenMaster = await TokenMaster.deploy(NAME, SYMBOL)
 
     const transaction = await tokenMaster.connect(deployer).list(
@@ -33,23 +33,29 @@ describe("TokenMaster", () => {
 
     await transaction.wait()
   })
-
+  
   describe("Deployment", () => {
     it("Sets the name", async () => {
       expect(await tokenMaster.name()).to.equal(NAME)
     })
-
-    it("Sets the symbol", async () => {
+    
+    it("Sets the symbol", async () => { 
       expect(await tokenMaster.symbol()).to.equal(SYMBOL)
     })
 
     it("Sets the owner", async () => {
       expect(await tokenMaster.owner()).to.equal(deployer.address)
     })
+
   })
 
   describe("Occasions", () => {
-    it('Returns occasions attributes', async () => {
+    it('Updates occasions count', async () => {
+      const totalOccasions = await tokenMaster.totalOccasions()
+      expect(totalOccasions).to.be.equal(1)
+    })
+
+    it('Returns occasions attrributes', async () => {
       const occasion = await tokenMaster.getOccasion(1)
       expect(occasion.id).to.be.equal(1)
       expect(occasion.name).to.be.equal(OCCASION_NAME)
@@ -60,10 +66,6 @@ describe("TokenMaster", () => {
       expect(occasion.location).to.be.equal(OCCASION_LOCATION)
     })
 
-    it('Updates occasions count', async () => {
-      const totalOccasions = await tokenMaster.totalOccasions()
-      expect(totalOccasions).to.be.equal(1)
-    })
   })
 
   describe("Minting", () => {
@@ -75,7 +77,6 @@ describe("TokenMaster", () => {
       const transaction = await tokenMaster.connect(buyer).mint(ID, SEAT, { value: AMOUNT })
       await transaction.wait()
     })
-
     it('Updates ticket count', async () => {
       const occasion = await tokenMaster.getOccasion(1)
       expect(occasion.tickets).to.be.equal(OCCASION_MAX_TICKETS - 1)
@@ -88,7 +89,7 @@ describe("TokenMaster", () => {
 
     it('Updates seat status', async () => {
       const owner = await tokenMaster.seatTaken(ID, SEAT)
-      expect(owner).to.equal(buyer.address)
+      expect(owner).to.be.equal(buyer.address)
     })
 
     it('Updates overall seating status', async () => {
@@ -101,8 +102,9 @@ describe("TokenMaster", () => {
       const balance = await ethers.provider.getBalance(tokenMaster.address)
       expect(balance).to.be.equal(AMOUNT)
     })
-  })
 
+  })
+  
   describe("Withdrawing", () => {
     const ID = 1
     const SEAT = 50
@@ -129,4 +131,5 @@ describe("TokenMaster", () => {
       expect(balance).to.equal(0)
     })
   })
+
 })

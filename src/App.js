@@ -28,7 +28,8 @@ function App() {
     setProvider(provider)
 
     const network = await provider.getNetwork()
-    const tokenMaster = new ethers.Contract(config[network.chainId].TokenMaster.address, TokenMaster, provider)
+    const address = config[network.chainId].TokenMaster.address
+    const tokenMaster = new ethers.Contract(address, TokenMaster, provider)
     setTokenMaster(tokenMaster)
 
     const totalOccasions = await tokenMaster.totalOccasions()
@@ -41,11 +42,20 @@ function App() {
 
     setOccasions(occasions)
 
+    console.log(occasions)
+
+    console.log({ totalOccasions: totalOccasions.toString() })
+
+    console.log(tokenMaster.address)
+
+    // Refresh Account
     window.ethereum.on('accountsChanged', async () => {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
       const account = ethers.utils.getAddress(accounts[0])
       setAccount(account)
     })
+
+
   }
 
   useEffect(() => {
@@ -56,7 +66,6 @@ function App() {
     <div>
       <header>
         <Navigation account={account} setAccount={setAccount} />
-
         <h2 className="header__title"><strong>Event</strong> Tickets</h2>
       </header>
 
@@ -74,18 +83,19 @@ function App() {
             setToggle={setToggle}
             setOccasion={setOccasion}
             key={index}
-          />
+           />
         ))}
       </div>
 
       {toggle && (
-        <SeatChart
+          <SeatChart
           occasion={occasion}
           tokenMaster={tokenMaster}
           provider={provider}
           setToggle={setToggle}
         />
       )}
+
     </div>
   );
 }
